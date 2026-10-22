@@ -1,6 +1,10 @@
 const CATALOG_URL = "https://baerpharmacy.allpharm.co.il/api/ProductSelection/getProductSelection";
 const PHARMACY_ORIGIN = "https://baerpharmacy.allpharm.co.il";
 
+export const config = {
+  maxDuration: 60,
+};
+
 function clean(value) {
   return String(value ?? "").replace(/[\u200e\u200f\u202a-\u202e\u2066-\u2069]/g, "").trim();
 }
@@ -44,7 +48,8 @@ export default async function handler(req, res) {
   res.setHeader("X-Content-Type-Options", "nosniff");
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000);
+  // Allpharm's full catalog response can take around 20 seconds.
+  const timeout = setTimeout(() => controller.abort(), 45000);
 
   try {
     const upstream = await fetch(CATALOG_URL, {
