@@ -81,6 +81,11 @@ export default async function handler(req, res) {
       products: flatten(payload.value),
     });
   } catch (error) {
+    console.error("Allpharm catalog request failed", {
+      name: error?.name || "Error",
+      message: error?.message || "Unknown error",
+      cause: error?.cause?.code || error?.cause?.message || undefined,
+    });
     return res.status(502).json({ success: false, error: "Catalog is temporarily unavailable" });
   } finally {
     clearTimeout(timeout);
