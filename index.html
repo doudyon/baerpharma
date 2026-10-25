@@ -63,7 +63,7 @@ dialog{border:0;border-radius:20px;padding:26px;max-width:420px;width:calc(100% 
   <div class="catalog-head"><div><div class="section-label">הקטלוג של BAER</div><h2>מוצרים זמינים</h2></div>
     <div class="filters" role="group" aria-label="סינון קטלוג"><button class="filter active" data-filter="all">הכול</button><button class="filter" data-filter="flowers">תפרחות</button><button class="filter" data-filter="oils">שמנים</button><button class="filter" data-filter="rolls">גליליות</button></div>
   </div>
-  <div class="catalog-note catalog-state"><span id="catalog-status" role="status" aria-live="polite">מתחבר למלאי העדכני של Allpharm…</span><button id="refresh-catalog" type="button" hidden>רענון קטלוג</button></div>
+  <div class="catalog-note catalog-state"><span id="catalog-status" role="status" aria-live="polite">מתחבר לקטלוג EasyCannabis…</span><button id="refresh-catalog" type="button" hidden>רענון קטלוג</button></div>
   <div class="product-grid" id="product-grid"></div>
 </div></section>
 <section class="shell section" id="about">
@@ -75,7 +75,7 @@ dialog{border:0;border-radius:20px;padding:26px;max-width:420px;width:calc(100% 
 <section class="faq" id="faq"><div class="shell section faq-grid">
   <div><div class="section-label">שאלות נפוצות</div><h2>רוצה לדעת עוד?</h2><p class="lead">מידע כללי על השירות ועל התהליך.</p></div>
   <div class="faq-list">
-    <details><summary>איך ממשיכים להזמנה?</summary><p>הקטלוג באתר מתעדכן ממערכת Allpharm. לחיצה על "להזמנה" תעביר אתכם למערכת בית המרקחת להמשך התהליך, לבדיקת הזכאות ולהשלמת ההזמנה.</p></details>
+    <details><summary>איך ממשיכים להזמנה?</summary><p>פרטי המוצרים, המחירים והמלאי באתר מגיעים מקטלוג EasyCannabis. לחיצה על "להזמנה" תעביר אתכם למערכת בית המרקחת להמשך התהליך, לבדיקת הזכאות ולהשלמת ההזמנה.</p></details>
     <details><summary>מה נדרש כדי לקבל שירות?</summary><p>ניפוק מוצרי קנאביס רפואי נעשה בהתאם לרישיון ולהוראות הרלוונטיות. הצוות יבדוק את המסמכים הנדרשים במסגרת תהליך השירות.</p></details>
     <details><summary>אפשר לקבל משלוח?</summary><p>יש לבדוק זמינות, אזור שירות ואפשרויות מסירה מול בית המרקחת. מסירה מתבצעת בהתאם לנהלים החלים.</p></details>
     <details><summary>האם האתר נותן ייעוץ רפואי?</summary><p>לא. לשאלות רפואיות, התאמת טיפול או שינוי במינון יש לפנות לרופא המטפל.</p></details>
@@ -84,10 +84,10 @@ dialog{border:0;border-radius:20px;padding:26px;max-width:420px;width:calc(100% 
 <section class="shell closing"><div class="closing-panel"><div><h2>מוכנים להמשיך?</h2><p>הזמנה והשלמת פרטי המטופל נעשות במערכת Allpharm.</p></div><a class="button" href="https://baerpharmacy.allpharm.co.il/app/mobile/products-sale/orderOpen" target="_blank" rel="noopener">מעבר להזמנה</a></div></section>
 </main>
 <footer><div class="shell"><div class="footer-row"><a href="#home"><img class="footer-logo" src="/baeronly.svg" alt="BAER"></a><nav class="footer-nav"><a href="#categories">קטגוריות</a><a href="#catalog">קטלוג</a><a href="#about">על BAER</a><a href="#faq">שאלות נפוצות</a></nav></div><p class="legal">המידע באתר כללי ואינו מהווה ייעוץ רפואי. ניפוק ומסירת מוצרים מתבצעים לפי רישיון, מרשם והוראות הדין. לשאלות רפואיות יש לפנות לרופא המטפל.</p></div></footer>
-<dialog id="info-dialog"><button class="close" aria-label="סגירה">×</button><h3>המשך ההזמנה</h3><p>המוצרים והמחירים נטענים ממלאי Allpharm. כדי לבדוק זכאות ולהשלים הזמנה, ממשיכים למערכת בית המרקחת.</p><a class="join" href="https://baerpharmacy.allpharm.co.il/app/mobile/products-sale/orderOpen" target="_blank" rel="noopener">מעבר ל־Allpharm</a></dialog>
+<dialog id="info-dialog"><button class="close" aria-label="סגירה">×</button><h3>המשך ההזמנה</h3><p>המוצרים, המחירים והמלאי מוצגים לפי קטלוג EasyCannabis. לבדיקת זכאות ולהשלמת הזמנה, ממשיכים למערכת בית המרקחת.</p><a class="join" href="https://baerpharmacy.allpharm.co.il/app/mobile/products-sale/orderOpen" target="_blank" rel="noopener">מעבר למערכת ההזמנות</a></dialog>
 <script>
 const grid=document.querySelector("#product-grid"),search=document.querySelector("#search-input"),statusEl=document.querySelector("#catalog-status"),refreshButton=document.querySelector("#refresh-catalog");
-const ORDER_URL="https://baerpharmacy.allpharm.co.il/app/mobile/products-sale/orderOpen",IMAGE_BASE="https://baerpharmacy.allpharm.co.il/assets/img/productDetails/itemImages/";
+const ORDER_URL="https://baerpharmacy.allpharm.co.il/app/mobile/products-sale/orderOpen";
 let products=[],selected="all",loading=true;
 const clean=value=>String(value??"").replace(/[\u200e\u200f\u202a-\u202e\u2066-\u2069]/g,"").trim();
 const categoryOf=value=>{const s=clean(value);if(s.includes("שמן"))return "oils";if(s.includes("גליל"))return "rolls";if(s.includes("תפרחת"))return "flowers";return "other"};
@@ -105,12 +105,12 @@ function flattenCatalog(groups){
 function productCard(p){
   const card=document.createElement("article");card.className="product";
   const art=document.createElement("div");art.className="product-art fallback";
-  const img=document.createElement("img");img.src=IMAGE_BASE+p.code+".png";img.alt="תמונת "+p.name;img.loading="lazy";img.onerror=()=>{img.remove();art.classList.add("fallback");const pack=document.createElement("div");pack.className="pack";pack.innerHTML="<em>B.</em><span>BAER</span>";art.append(pack)};img.onload=()=>art.classList.remove("fallback");art.append(img);
+  const img=document.createElement("img");img.src=p.imageUrl||"";img.alt="תמונת "+p.name;img.loading="lazy";img.onerror=()=>{img.remove();art.classList.add("fallback");const pack=document.createElement("div");pack.className="pack";pack.innerHTML="<em>B.</em><span>BAER</span>";art.append(pack)};img.onload=()=>art.classList.remove("fallback");art.append(img);
   const info=document.createElement("div");info.className="product-info";
   const tag=document.createElement("div");tag.className="product-tag";tag.textContent=[p.dosage,categoryLabel(p.category)].filter(Boolean).join(" · ");
   const title=document.createElement("h3");title.textContent=p.name;
   const description=document.createElement("p");description.textContent=p.brand||"מוצר זמין בקטלוג BAER";
-  const stock=document.createElement("div");stock.className="stock-label";stock.textContent="זמין לפי המלאי ב־Allpharm";
+  const stock=document.createElement("div");stock.className="stock-label";stock.textContent="זמין לפי קטלוג EasyCannabis";
   const foot=document.createElement("div");foot.className="product-foot";
   const price=document.createElement("div");price.className="product-price";const current=document.createElement("strong");current.textContent=money(p.price);price.append(current);
   if(p.before>p.price){const old=document.createElement("del");old.textContent=money(p.before);price.append(old)}
@@ -127,8 +127,8 @@ function render(){
 }
 async function loadCatalog(){
   loading=true;statusEl.textContent="מתחבר למלאי העדכני של Allpharm…";refreshButton.hidden=true;render();
-  try{const response=await fetch("/api/products",{headers:{Accept:"application/json"}});if(!response.ok)throw new Error("HTTP "+response.status);const data=await response.json();if(data.success!==true||!Array.isArray(data.products))throw new Error("Invalid catalog response");products=data.products;statusEl.textContent=products.length+" מוצרים זמינים · מחיר ומלאי מסונכרנים מ־Allpharm";}
-  catch(error){products=[];statusEl.textContent="לא הצלחנו לטעון כרגע את המלאי. אפשר לנסות שוב או לעבור לקטלוג Allpharm.";refreshButton.hidden=false;}
+  try{const response=await fetch("/api/products",{headers:{Accept:"application/json"}});if(!response.ok)throw new Error("HTTP "+response.status);const data=await response.json();if(data.success!==true||!Array.isArray(data.products))throw new Error("Invalid catalog response");products=data.products;statusEl.textContent=products.length+" מוצרים זמינים · נתוני קטלוג EasyCannabis";}
+  catch(error){products=[];statusEl.textContent="לא הצלחנו לטעון כרגע את המלאי. אפשר לנסות שוב או לעבור למערכת ההזמנות.";refreshButton.hidden=false;}
   finally{loading=false;render()}
 }
 function setFilter(value){
