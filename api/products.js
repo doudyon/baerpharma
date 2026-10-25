@@ -1,5 +1,5 @@
-const CATALOG_URL = "https://baerpharmacy.allpharm.co.il/api/ProductSelection/getProductSelection";
-const PHARMACY_ORIGIN = "https://baerpharmacy.allpharm.co.il";
+const API_ORIGIN = "https://easycannabis.co.il";
+const PHARMACY_PATH = "/api/pharms/hadov-hagdol/pharm-products";
 
 export const config = {
   maxDuration: 60,
@@ -9,33 +9,56 @@ function clean(value) {
   return String(value ?? "").replace(/[\u200e\u200f\u202a-\u202e\u2066-\u2069]/g, "").trim();
 }
 
-function flatten(groups) {
-  const products = [];
+function categoryOf(form) {
+  if (form.includes("שמן")) return "oils";
+  if (form.includes("גליל")) return "rolls";
+  if (form.includes("תפרחת")) return "flowers";
+  return "other";
+}
 
-  for (const dosageGroup of groups || []) {
-    for (const formGroup of dosageGroup.treatmentForm || []) {
-      for (const item of formGroup.product || []) {
-        const code = Number(item.code);
-        const price = Number(item.price);
-        if (!Number.isSafeInteger(code) || !Number.isFinite(price) || item.isInStock !== true) continue;
+function flatten(items) {
+  return (items || []).flatMap((item) => {
+    const product = item.product || {};
+    const info = product.info || {};
+    const id = Number(item.id);
+    const price = Number(item.price ?? item.totalPrice);
+    const form = clean(product.shortName);
+    const imagePath = product.imageUrl || product.media?.find((media) => media.type === "image")?.url;
 
-        const form = clean(item.treatmentForm || formGroup.treatmentForm);
-        products.push({
-          code,
-          name: clean(item.nameHeb || item.name),
-          brand: clean(item.brandHeb || item.brand),
-          dosage: clean(item.activeIngredient || dosageGroup.dosage),
-          form,
-          price,
-          priceBeforeSale: Number.isFinite(Number(item.priceBeforeSale)) ? Number(item.priceBeforeSale) : null,
-          inStock: true,
-          imageUrl: `${PHARMACY_ORIGIN}/assets/img/productDetails/itemImages/${code}.png`,
-        });
-      }
-    }
-  }
+    if (!Number.isSafeInteger(id) || !Number.isFinite(price) || item.inStock !== true || item.published === false || product.published === false || !product.name) return [];
 
-  return products.filter((product) => product.name);
+    return [{
+      code: id,
+      name: clean(product.name),
+      brand: clean(info.brandHeb || info.company || info.producerName),
+      dosage: clean(info.thccbdDosage),
+      form,
+      category: categoryOf(form),
+      price,
+      before: Number.isFinite(Number(item.originalPrice)) ? Number(item.originalPrice) : null,
+      inStock: true,
+      imageUrl: imagePath ? new URL(imagePath, API_ORIGIN).toString() : null,
+    }];
+  });
+}
+
+function apiHeaders() {
+  return {
+    Accept: "application/json, text/plain, */*",
+    "x-api-key": process.env.EASYCANNABIS_API_KEY,
+    "x-app-id": "easycannabis-website-frontend",
+    "x-app-version": "6e748cbe22d65b6b8955fba1db0b178d",
+    Referer: "https://easycannabis.co.il/pharms/hadov-hagdol",
+  };
+}
+
+async function fetchPage(page, signal) {
+  const response = await fetch(`${API_ORIGIN}${PHARMACY_PATH}?page=${page}`, {
+    headers: apiHeaders(),
+    signal,
+  });
+  if (!response.ok) throw new Error(`Catalog provider returned ${response.status}`);
+  return response.json();
 }
 
 export default async function handler(req, res) {
@@ -47,41 +70,40 @@ export default async function handler(req, res) {
   res.setHeader("Cache-Control", "public, s-maxage=60, stale-while-revalidate=300");
   res.setHeader("X-Content-Type-Options", "nosniff");
 
+  if (!process.env.EASYCANNABIS_API_KEY) {
+    return res.status(503).json({ success: false, error: "Catalog is not configured" });
+  }
+
   const controller = new AbortController();
-  // Allpharm's full catalog response can take around 20 seconds.
   const timeout = setTimeout(() => controller.abort(), 45000);
 
   try {
-    const upstream = await fetch(CATALOG_URL, {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        userid: PHARMACY_ORIGIN,
-        Origin: PHARMACY_ORIGIN,
-        Referer: `${PHARMACY_ORIGIN}/app/mobile/products-sale/orderOpen`,
-      },
-      body: JSON.stringify({ nameEnglish: null }),
-      signal: controller.signal,
-      redirect: "error",
-    });
+    const first = await fetchPage(1, controller.signal);
+    if (!Array.isArray(first?.pharmProducts)) throw new Error("Unexpected catalog response");
 
-    if (!upstream.ok) {
-      return res.status(502).json({ success: false, error: "Catalog provider returned an error" });
-    }
+    const total = Number(first.total);
+    const perPage = Number(first.perPage);
+    const pageCount = Number.isFinite(total) && Number.isFinite(perPage) && perPage > 0
+      ? Math.min(Math.ceil(total / perPage), 20)
+      : 1;
 
-    const payload = await upstream.json();
-    if (payload?.success !== true || !Array.isArray(payload.value)) {
-      return res.status(502).json({ success: false, error: "Unexpected catalog response" });
-    }
+    const remaining = await Promise.all(
+      Array.from({ length: pageCount - 1 }, (_, index) => fetchPage(index + 2, controller.signal)),
+    );
 
+    const pages = [first, ...remaining];
+    if (pages.some((page) => !Array.isArray(page?.pharmProducts))) throw new Error("Unexpected catalog response");
+
+    const products = flatten(pages.flatMap((page) => page.pharmProducts));
     return res.status(200).json({
       success: true,
       updatedAt: new Date().toISOString(),
-      products: flatten(payload.value),
+      source: "EasyCannabis",
+      total: products.length,
+      products,
     });
   } catch (error) {
-    console.error("Allpharm catalog request failed", {
+    console.error("EasyCannabis catalog request failed", {
       name: error?.name || "Error",
       message: error?.message || "Unknown error",
       cause: error?.cause?.code || error?.cause?.message || undefined,
